@@ -39,6 +39,6 @@ pruning_limit = 100
 [sperocoind]
 host = 127.0.0.1
 port = 55681
-# user and password from sperocoin.conf
+# user and password from SperoCoin.conf
 user =
 password =
