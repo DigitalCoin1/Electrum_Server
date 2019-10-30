@@ -111,10 +111,10 @@ In order to allow Electrum to "talk" to `sperocoind`, we need to set up an RPC
 username and password for `sperocoind`. We will then start `sperocoind` and
 wait for it to complete downloading the blockchain.
 
-    $ mkdir ~/.sperocoin
-    $ $EDITOR ~/.sperocoin/sperocoin.conf
+    $ mkdir ~/.SperoCoin
+    $ $EDITOR ~/.SperoCoin/SperoCoin.conf
 
-Write this in `sperocoin.conf`:
+Write this in `SperoCoin.conf`:
 
     rpcuser=<rpc-username>
     rpcpassword=<rpc-password>
