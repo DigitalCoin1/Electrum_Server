@@ -1,59 +1,30 @@
 from setuptools import setup
-import os
 
-
-basedir = os.path.abspath(os.path.dirname(__file__))
-
-
-def read_file(filename):
-    f = open(os.path.join(basedir, filename))
-    try:
-        return f.read()
-    finally:
-        f.close()
-
-
-VERSION = '0.9.2'
 setup(
-    name="sperocoin-electrum-server",
-    version=VERSION,
-    scripts=['run_electrum_server', 'electrum-server', 'electrum-configure', 'electrum.conf.sample'],
-    install_requires=['plyvel', 'jsonrpclib', 'irc'],
-    package_dir={'electrum_server': 'src'},
+    name="electrum-server",
+    version="1.0",
+    scripts=['run_electrum_server.py','electrum-server'],
+    install_requires=['plyvel','jsonrpclib', 'irc >= 11, <=14.0'],
+    package_dir={
+        'electrumserver':'src'
+        },
     py_modules=[
-        'electrum_server.__init__',
-        'electrum_server.utils',
-        'electrum_server.storage',
-        'electrum_server.deserialize',
-        'electrum_server.networks',
-        'electrum_server.blockchain_processor',
-        'electrum_server.server_processor',
-        'electrum_server.processor',
-        'electrum_server.version',
-        'electrum_server.ircthread',
-        'electrum_server.stratum_tcp',
-        'electrum_server.stratum_http'
+        'electrumserver.__init__',
+        'electrumserver.utils',
+        'electrumserver.storage',
+        'electrumserver.deserialize',
+        'electrumserver.networks',
+        'electrumserver.blockchain_processor',
+        'electrumserver.server_processor',
+        'electrumserver.processor',
+        'electrumserver.version',
+        'electrumserver.ircthread',
+        'electrumserver.stratum_tcp'
     ],
-    description="Sperocoin Electrum server",
-    author="Thomas Voegtlin, SperoCoin Developers",
-    author_email="thomasv1@gmx.de, helper@sperocoin.org, sperocoin@gmail.com",
-    maintainer="Larry Ren",
-    maintainer_email="rhelper@sperocoin.org",
-    license="GNU Affero GPLv3",
-    url="https://sperocoin.org",
-    download_url="https://pypi.python.org/packages/source/l/reddcoin-electrum-server/reddcoin-electrum-server-%s.tar.gz" % VERSION,
-    long_description=read_file('README.rst'),
-    platforms="All",
-    classifiers=[
-        'Environment :: Console',
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Developers',
-        'Intended Audience :: System Administrators',
-        'License :: OSI Approved :: GNU Affero General Public License v3',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
-        'Operating System :: OS Independent',
-        'Topic :: Office/Business :: Financial',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-    ],
+    description="Bitcoin Electrum Server",
+    author="Thomas Voegtlin",
+    author_email="thomasv@electrum.org",
+    license="MIT Licence",
+    url="https://github.com/spesmilo/electrum-server/",
+    long_description="""Server for the Electrum Lightweight Bitcoin Wallet"""
 )

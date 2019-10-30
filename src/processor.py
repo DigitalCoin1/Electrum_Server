@@ -1,3 +1,26 @@
+#!/usr/bin/env python
+# Copyright(C) 2011-2016 Thomas Voegtlin
+#
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation files
+# (the "Software"), to deal in the Software without restriction,
+# including without limitation the rights to use, copy, modify, merge,
+# publish, distribute, sublicense, and/or sell copies of the Software,
+# and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+# BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+# ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import json
 import Queue as queue
 import socket
@@ -5,8 +28,8 @@ import threading
 import time
 import sys
 
-from .utils import random_string, timestr, print_log, logger
-
+from utils import random_string, timestr, print_log
+from utils import logger
 
 class Shared:
 
@@ -66,14 +89,16 @@ class Processor(threading.Thread):
                 msg_id = request.get('id')
             except:
                 continue
+            if session.stopped():
+                continue
             try:
                 result = self.process(request)
                 self.push_response(session, {'id': msg_id, 'result': result})
             except BaseException, e:
-                self.push_response(session, {'id': msg_id, 'error': str(e)})
+                self.push_response(session, {'id': msg_id, 'error':str(e)})
             except:
                 logger.error("process error", exc_info=True)
-                self.push_response(session, {'id': msg_id, 'error': 'unknown error'})
+                self.push_response(session, {'id': msg_id, 'error':'unknown error'})
 
         self.close()
 
@@ -107,6 +132,7 @@ class RequestDispatcher(threading.Thread):
         self.idlock = threading.Lock()
         self.sessions = {}
         self.processors = {}
+        self.lastgc = 0 
 
     def push_response(self, session, item):
         self.response_queue.put((session, item))
@@ -129,18 +155,12 @@ class RequestDispatcher(threading.Thread):
         if self.shared is None:
             raise TypeError("self.shared not set in Processor")
 
-        lastgc = 0 
-
         while not self.shared.stopped():
             session, request = self.pop_request()
             try:
                 self.do_dispatch(session, request)
             except:
-                logger.error('dispatch', exc_info=True)
-
-            if time.time() - lastgc > 60.0:
-                self.collect_garbage()
-                lastgc = time.time()
+                logger.error('dispatch',exc_info=True)
 
         self.stop()
 
@@ -156,7 +176,8 @@ class RequestDispatcher(threading.Thread):
 
         if session is not None:
             if suffix == 'subscribe':
-                session.subscribe_to_service(method, params)
+                if not session.subscribe_to_service(method, params):
+                    return
 
         prefix = request['method'].split('.')[0]
         try:
@@ -187,13 +208,7 @@ class RequestDispatcher(threading.Thread):
     def remove_session(self, session):
         key = session.key()
         with self.lock:
-            self.sessions.pop(key)
-
-    def collect_garbage(self):
-        now = time.time()
-        for session in self.sessions.values():
-            if (now - session.time) > session.timeout:
-                session.stop()
+            del self.sessions[key]
 
 
 class Session:
@@ -209,12 +224,14 @@ class Session:
         self.version = 'unknown'
         self.protocol_version = 0.
         self.time = time.time()
+        self.max_subscriptions = dispatcher.shared.config.getint('server', 'max_subscriptions')
         threading.Timer(2, self.info).start()
 
-    def key(self):
-        return self.name + self.address
 
-    # Debugging method. Doesn't need to be thread-safe.
+    def key(self):
+        return self.address
+
+    # Debugging method. Doesn't need to be threadsafe.
     def info(self):
         if self.subscriptions:
             print_log("%4s" % self.name,
@@ -232,21 +249,32 @@ class Session:
         self.dispatcher.remove_session(self)
         self.stop_subscriptions()
 
+
     def shutdown(self):
         pass
+
 
     def stopped(self):
         with self.lock:
             return self._stopped
 
+
     def subscribe_to_service(self, method, params):
         if self.stopped():
-            return
+            return False
+
+        if len(self.subscriptions) > self.max_subscriptions:
+            print_log("max subscriptions reached", self.address)
+            self.stop()
+            return False
+
         # append to self.subscriptions only if this does not raise
         self.bp.do_subscribe(method, params, self)
         with self.lock:
             if (method, params) not in self.subscriptions:
-                self.subscriptions.append((method, params))
+                self.subscriptions.append((method,params))
+        return True
+
 
     def stop_subscriptions(self):
         with self.lock:
