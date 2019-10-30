@@ -160,7 +160,7 @@ We will download the latest git snapshot for Electrum to configure and install i
 
     $ cd ~
     $ git clone https://github.com/DigitalCoin1/Electrum_Server.git
-    $ cd electrum-server
+    $ cd Electrum_Server
     $ sudo apt-get install python-setuptools
     $ sudo ./configure
     $ sudo python setup.py install
