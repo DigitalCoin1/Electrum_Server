@@ -34,7 +34,7 @@ pruning_limit = 100
 
 [sperocoind]
 sperocoind_host = localhost
-sperocoind_port = 8332
+sperocoind_port = 55681
 # user and password from SperoCoin.conf (not needed for localhost)
 #sperocoind_user =
 #sperocoind_password =
