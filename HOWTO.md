@@ -185,6 +185,19 @@ doesn't have the python-leveldb package or if plyvel installation fails.
 
 leveldb should be at least version 1.9.0. Earlier version are believed to be buggy.
 
+In case of error(`error: ‘struct leveldb::Options’ has no member named ‘max_file_size’`) in installation due to leveldb, compile version 1.20 manually:
+
+    $ export VER="1.20"
+    $ wget https://github.com/google/leveldb/archive/v${VER}.tar.gz
+    $ tar xvf v${VER}.tar.gz
+    $ rm -f v${VER}.tar.gz
+    $ cd leveldb-${VER}
+    $ make
+    $ sudo scp -r out-static/lib* out-shared/lib* "/usr/local/lib"
+    $ cd include
+    $ sudo scp -r leveldb /usr/local/include
+    $ sudo ldconfig
+
 ### Step 6. Select your limit
 
 Electrum server uses leveldb to store transactions. You can choose
