@@ -9,6 +9,6 @@ params = {
     'sperocoin_test': {
         'pubkey_address': 125,
         'script_address': 196,
-        'genesis_hash': '000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943'
+        'genesis_hash': 'be10a5eb2ff7c7f2c958826bc773b05748cf3c8c851744425e1af311ed36e502'
     }
 }

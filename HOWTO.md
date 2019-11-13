@@ -1,9 +1,3 @@
-Note
-====
-
-This code is now unmaintained. The replacement code for electrum
-server is ElectrumX: https://github.com/kyuupichan/electrumx
-
 How to run your own Electrum server
 ===================================
 
@@ -27,19 +21,19 @@ In this document, lines starting with a hash sign (#) or a dollar sign ($)
 contain commands. Commands starting with a hash should be run as root,
 commands starting with a dollar should be run as a normal user (in this
 document, we assume that user is called 'sperocoin'). We also assume the
-sperocoin user has sudo rights, so we use `$ sudo command` when we need to.
+sperocoin user has sudo rights, so we use '$ sudo command' when we need to.
 
 Strings that are surrounded by "lower than" and "greater than" ( < and > )
 should be replaced by the user with something appropriate. For example,
-\<password\> should be replaced by a password. Do not confuse this
-notation with shell redirection (`command < file` or `command > file`)!
+\<password\> should be replaced by a user chosen password. Do not confuse this
+notation with shell redirection ('command < file' or 'command > file')!
 
 Lines that lack hash or dollar signs are pastes from config files. They
 should be copied verbatim or adapted without the indentation tab.
 
-`apt-get install` commands are suggestions for required dependencies.
-They conform to an Ubuntu 15.10 system but may well work with Debian
-or other versions of Ubuntu.
+apt-get install commands are suggestions for required dependencies.
+They conform to an Ubuntu 13.10 system but may well work with Debian
+or earlier and later versions of Ubuntu.
 
 Prerequisites
 -------------
@@ -58,21 +52,17 @@ installed: `python`, `easy_install`, `git`, standard C/C++
 build chain. You will need root access in order to install other software or
 Python libraries. Python 2.7 is the minimum supported version.
 
-**Hardware.** The lightest setup is a pruning server with disk space
-requirements of about 50 GB for the Electrum database (January 2017). However note that
-you also need to run sperocoind and keep a copy of the full blockchain,
-which is roughly 4 GB (Octuber 2019). Ideally you have a machine with 16 GB of RAM
-and an equal amount of swap. If you have ~2 GB of RAM make sure you limit sperocoind 
-to 8 concurrent connections by disabling incoming connections. electrum-server may
-bail-out on you from time to time with less than 4 GB of RAM, so you might have to 
-monitor the process and restart it. You can tweak cache sizes in the config to an extend
-but most RAM will be used to process blocks and catch-up on initial start.
-
-CPU speed is less important than fast I/O speed. electrum-server makes use of one core 
-only leaving spare cycles for sperocoind. Fast single core CPU power helps for the initial 
-block chain import. Any multi-core x86 CPU with CPU Mark / PassMark > 1500 will work
-(see https://www.cpubenchmark.net/). An ideal setup in February 2016 has 16 GB+ RAM and
-SSD for good i/o speed.
+**Hardware.** The lightest setup is a pruning server with diskspace 
+requirements of about 4 GB for the electrum database. However note that 
+you also need to run sperocoind and keep a copy of the full blockchain, 
+which is roughly 4 GB in April 2014. If you have less than 2 GB of RAM 
+make sure you limit sperocoind to 8 concurrent connections. If you have more 
+resources to spare you can run the server with a higher limit of historic
+transactions per address. CPU speed is important for the initial block
+chain import, but is also important if you plan to run a public Electrum server, 
+which could serve tens of concurrent requests. Any multi-core x86 CPU from 2009 or
+newer other than an Atom should do for good performance. An ideal setup
+has enough RAM to hold and process the leveldb database in tmpfs (e.g. /dev/shm).
 
 Instructions
 ------------
@@ -99,8 +89,9 @@ to your `.bashrc`, `.profile`, or `.bash_profile`, then logout and relogin:
 
 ### Step 2. Download sperocoind
 
-We currently recommend sperocoin core 2.6.4.9 stable. If your package manager does not supply
-a recent sperocoind or you prefer to compile it yourself, here are some pointers for Ubuntu:
+-We currently recommend sperocoin core 2.6.4.9 stable.
+
+If you prefer to compile sperocoind, here are some pointers for Ubuntu:
 
     $ sudo apt-get install build-essential libboost-all-dev libcurl4-openssl-dev libdb5.3-dev libdb5.3++-dev libminiupnpc-dev qrencode libqrencode-dev git libtool automake autotools-dev autoconf pkg-config libssl-dev libgmp3-dev libevent-dev bsdmainutils
     $ sudo su - sperocoin
@@ -129,10 +120,8 @@ Write this in `SperoCoin.conf`:
     daemon=1
     txindex=1
     staking=0
+    disablewallet=1
 
-rpcuser / rpcpassword options are only needed for non-localhost connections.
-you can consider setting maxconnections if you want to reduce sperocoind bandwidth
-(as stated above)
 
 If you have an existing installation of sperocoind and have not previously
 set txindex=1 you need to reindex the blockchain by running
@@ -143,49 +132,44 @@ If you already have a freshly indexed copy of the blockchain with txindex start 
 
     $ sperocoind
 
-Allow some time to pass for `sperocoind` to connect to the network and start
+Allow some time to pass, so `sperocoind` connects to the network and starts
 downloading blocks. You can check its progress by running:
 
-    $ sperocoin-cli getblockchaininfo
+    $ sperocoind getinfo
 
-Before starting the Electrum server your sperocoind should have processed all
+Before starting the electrum server your sperocoind should have processed all
 blocks and caught up to the current height of the network (not just the headers).
 You should also set up your system to automatically start sperocoind at boot
 time, running as the 'sperocoin' user. Check your system documentation to
 find out the best way to do this.
 
-### Step 4. Download and install Electrum server
+### Step 4. Download and install Electrum Server
 
 We will download the latest git snapshot for Electrum to configure and install it:
 
     $ cd ~
     $ git clone https://github.com/DigitalCoin1/Electrum_Server.git
-    $ cd Electrum_Server
-    $ sudo apt-get install python-setuptools
-    $ sudo ./configure
+    $ cd electrum-sperocoin-server
+    $ sudo configure
     $ sudo python setup.py install
 
-See the INSTALL file for more information about the configure and install commands.
+See the INSTALL file for more information about the configure and install commands. 
 
 ### Optional Step 5: Install Electrum dependencies manually
 
 Electrum server depends on various standard Python libraries and leveldb. These will usually be
-installed by calling `python setup.py install` above. They can be also be installed with your
-package manager if you don't want to use the install routine.
+installed by caling "python setup.py install" above. They can be also be installed with your
+package manager if you don't want to use the install routine
 
-    $ sudo apt-get install python-setuptools python-openssl python-leveldb libleveldb-dev
+    $ sudo apt-get install python-setuptools python-openssl python-leveldb libleveldb-dev 
     $ sudo easy_install jsonrpclib irc plyvel
 
-For the python irc module please note electrum-server currently only supports versions between 11 and 14.0. 
-The setup.py takes care of installing a supported version but be aware of it when installing or upgrading
-manually.
-
-Regarding leveldb, see the steps in README.leveldb for further details, especially if your system
+Regarding leveldb see the steps in README.leveldb for further details, especially if your system
 doesn't have the python-leveldb package or if plyvel installation fails.
 
 leveldb should be at least version 1.9.0. Earlier version are believed to be buggy.
 
-In case of error(`error: ‘struct leveldb::Options’ has no member named ‘max_file_size’`) in installation due to leveldb, compile version 1.20 manually:
+In case of error(error: ‘struct leveldb::Options’ has no member named ‘max_file_size’) in installation due to leveldb, compile version 1.20 manually:
 
     $ export VER="1.20"
     $ wget https://github.com/google/leveldb/archive/v${VER}.tar.gz
@@ -210,7 +194,7 @@ deprecated.
 
 The pruning server uses leveldb and keeps a smaller and
 faster database by pruning spent transactions. It's a lot quicker to get up
-and running and requires less maintenance and disk space than abe.
+and running and requires less maintenance and diskspace than abe.
 
 The section in the electrum server configuration file (see step 10) looks like this:
 
@@ -221,17 +205,17 @@ The section in the electrum server configuration file (see step 10) looks like t
 
 ### Step 7. Import blockchain into the database or download it
 
-It's recommended that you fetch a pre-processed leveldb from the net.
+It's recommended to fetch a pre-processed leveldb from the net. 
 The "configure" script above will offer you to download a database with pruning limit 100.
 
-You can fetch recent copies of electrum leveldb databases with different pruning limits
+-You can fetch recent copies of electrum leveldb databases with different pruning limits
 and further instructions from the Electrum full archival server foundry at:
 https://foundry.electrum.org/
 
 
 Alternatively, if you have the time and nerve, you can import the blockchain yourself.
 
-As of October 2019 it takes about 4 hours to import the whole blockchain, depending
+As of April 2014 it takes between one and two days to import 500k blocks, depending
 on CPU speed, I/O speed, and your selected pruning limit.
 
 It's considerably faster and strongly recommended to index in memory. You can use /dev/shm or
@@ -239,24 +223,28 @@ or create a tmpfs which will also use swap if you run out of memory:
 
     $ sudo mount -t tmpfs -o rw,nodev,nosuid,noatime,size=15000M,mode=0777 none /tmpfs
 
-If you use tmpfs make sure you have enough RAM and swap to cover the size. If you only have 4 GB of
-RAM but add 15 GB of swap from a file that's fine too; tmpfs is smart enough to swap out the least
+If you use tmpfs make sure you have enough RAM and swap to cover the size. If you only have 2 gigs of
+RAM but add 15 gigs of swap from a file that's fine too. tmpfs is rather smart to swap out the least
 used parts. It's fine to use a file on an SSD for swap in this case.
 
-It's not recommended to do initial indexing of the database on an SSD because the indexing process
-does at least 20 TB (!) of disk writes and puts considerable wear-and-tear on an SSD. It's a lot better
-to use tmpfs and just swap out to disk when necessary.
+It's not recommended to do initial indexing of the database on a SSD because the indexing process
+does at least 10 TB (!) of disk writes and puts considerable wear-and-tear on an SSD. It's a lot better
+to use tmpfs and just swap out to disk when necessary.   
+
+Databases have grown to roughly 4 GB in April 2014, give or take a gigabyte between pruning limits 
+100 and 10000. Leveldb prunes the database from time to time, so it's not uncommon to see databases
+~50% larger at times when it's writing a lot, especially when indexing from the beginning.
 
 
 ### Step 8. Create a self-signed SSL cert
 
 [Note: SSL certificates signed by a CA are supported by 2.0 clients.]
 
-To run SSL / HTTPS you need to generate a self-signed certificate using openssl.
+To run SSL / HTTPS you need to generate a self-signed certificateusing openssl. 
 You could just comment out the SSL / HTTPS ports in the config and run
 without, but this is not recommended.
 
-Use the sample code below to create a self-signed cert with a recommended validity
+Use the sample code below to create a self-signed cert with a recommended validity 
 of 5 years. You may supply any information for your sign request to identify your server.
 They are not currently checked by the client except for the validity date.
 When asked for a challenge password just leave it empty and press enter.
@@ -274,27 +262,27 @@ When asked for a challenge password just leave it empty and press enter.
     A challenge password []:
     ...
 
-    $ openssl x509 -req -days 1825 -in server.csr -signkey server.key -out server.crt
+    $ openssl x509 -req -days 730 -in server.csr -signkey server.key -out server.crt
 
-The server.crt file is your certificate suitable for the `ssl_certfile=` parameter and
-server.key corresponds to `ssl_keyfile=` in your Electrum server config.
+The server.crt file is your certificate suitable for the ssl_certfile= parameter and
+server.key corresponds to ssl_keyfile= in your electrum server config.
 
-Starting with Electrum 1.9, the client will learn and locally cache the SSL certificate
+Starting with Electrum 1.9, the client will learn and locally cache the SSL certificate 
 for your server upon the first request to prevent man-in-the middle attacks for all
 further connections.
 
 If your certificate is lost or expires on the server side, you will need to run
 your server with a different server name and a new certificate.
 Therefore it's a good idea to make an offline backup copy of your certificate and key
-in case you need to restore them.
+in case you need to restore it.
 
 ### Step 9. Configure Electrum server
 
-Electrum reads a config file (/etc/electrum.conf) when starting up. This
+Electrum reads a config file (/etc/electrum-sperocoin.conf) when starting up. This
 file includes the database setup, sperocoind RPC setup, and a few other
 options.
 
-The "configure" script listed above will create a config file at /etc/electrum.conf
+The "configure" script listed above will create a config file at /etc/electrum-sperocoin.conf
 which you can edit to modify the settings.
 
 Go through the config options and set them to your liking.
@@ -304,91 +292,68 @@ If you intend to run the server publicly have a look at README-IRC.md
 
 Electrum server currently needs quite a few file handles to use leveldb. It also requires
 file handles for each connection made to the server. It's good practice to increase the
-open files limit to 128k.
+open files limit to 64k. 
 
-The "configure" script will take care of this and ask you to create a user for running electrum-server.
-If you're using the user `sperocoin` to run electrum and have added it as shown in this document, run
+The "configure" script will take care of this and ask you to create a user for running electrum-sperocoin-server.
+If you're using user sperocoin to run electrum and have added it manually like shown in this HOWTO run 
 the following code to add the limits to your /etc/security/limits.conf:
 
-     echo "sperocoin hard nofile 131072" >> /etc/security/limits.conf
-     echo "sperocoin soft nofile 131072" >> /etc/security/limits.conf
-
-If you are on Debian > 8.0 Jessie or another distribution based on it, you also need to add these lines in /etc/pam.d/common-session and /etc/pam.d/common-session-noninteractive otherwise the limits in /etc/security/limits.conf will not work:
-
-    echo "session required pam_limits.so" >> /etc/pam.d/common-session
-    echo "session required pam_limits.so" >> /etc/pam.d/common-session-noninteractive
-
-Check if the limits are changed either by logging with the user configured to run Electrum server as. Example:
-
-    su - sperocoin
-    ulimit -n
-
-Or if you use sudo and the user is added to sudoers group:
-
-    sudo -u sperocoin -i ulimit -n
-
+     echo "sperocoin hard nofile 65536" >> /etc/security/limits.conf
+     echo "sperocoin soft nofile 65536" >> /etc/security/limits.conf
 
 Two more things for you to consider:
 
-1. To increase privacy of transactions going through your server
-   you may want to close sperocoind for incoming connections and connect outbound only. Most servers do run
-   full nodes with open incoming connections though.
+1. To increase security you may want to close sperocoind for incoming connections and connect outbound only
 
-2. Consider restarting sperocoind (together with electrum-server) on a weekly basis to clear out unconfirmed
+2. Consider restarting sperocoind (together with electrum-sperocoin-server) on a weekly basis to clear out unconfirmed
    transactions from the local the memory pool which did not propagate over the network.
 
 ### Step 11. (Finally!) Run Electrum server
 
 The magic moment has come: you can now start your Electrum server as root (it will su to your unprivileged user):
 
-    # electrum-server start
+    # electrum-sperocoin-server start
 
-Note: If you want to run the server without installing it on your system, just run 'run_electrum_server" as the
+Note: If you want to run the server without installing it on your system, just run 'run_electrum_sperocoin_server" as the
 unprivileged user.
 
 You should see this in the log file:
 
     starting Electrum server
 
-If your blockchain database is out of date Electrum Server will start updating it. You will see something similar to this in the log file:
-
-    [09/02/2016-09:58:18] block 397319 (1727 197.37s) 0290aae5dc6395e2c60e8b2c9e48a7ee246cad7d0630d17dd5b54d70a41ffed7 (10.13tx/s, 139.78s/block) (eta 11.5 hours, 240 blocks)
-    
-The important pieces to you are at the end. In this example, the server has to calculate 240 more blocks, with an ETA of 11.5 hours. Multiple entries will appear below this one as the server catches back up to the latest block. During this time the server will not accept incoming connections from clients or connect to the IRC channel.
-
 If you want to stop Electrum server, use the 'stop' command:
 
-    # electrum-server stop
+    # electrum-sperocoin-server stop
 
 
-If your system supports it, you may add electrum-server to the /etc/init.d directory.
-This will ensure that the server is started and stopped automatically, and that the database is closed
+If your system supports it, you may add electrum-sperocoin-server to the /etc/init.d directory. 
+This will ensure that the server is started and stopped automatically, and that the database is closed 
 safely whenever your machine is rebooted.
 
-    # ln -s `which electrum-server` /etc/init.d/electrum-server
-    # update-rc.d electrum-server defaults
+    # ln -s `which electrum-sperocoin-server` /etc/init.d/electrum-sperocoin-server
+    # update-rc.d electrum-sperocoin-server defaults
 
 ### Step 12. Test the Electrum server
 
 We will assume you have a working Electrum client, a wallet, and some
-transaction history. You should start the client and click on the green
+transactions history. You should start the client and click on the green
 checkmark (last button on the right of the status bar) to open the Server
 selection window. If your server is public, you should see it in the list
 and you can select it. If you server is private, you need to enter its IP
 or hostname and the port. Press 'Ok' and the client will disconnect from the
 current server and connect to your new Electrum server. You should see your
 addresses and transactions history. You can see the number of blocks and
-response time in the server selection window. You should send/receive some
+response time in the Server selection window. You should send/receive some
 sperocoins to confirm that everything is working properly.
 
 ### Step 13. Join us on IRC, subscribe to the server thread
 
 Say hi to the dev crew, other server operators, and fans on
-irc.freenode.net #electrum and we'll try to congratulate you
-on supporting the community by running an Electrum node.
+irc.freenode.net #electrum-sperocoin and we'll try to congratulate you
+on supporting the community by running an Electrum-LTC node.
 
-If you're operating a public Electrum server please subscribe
-to or regularly check the following thread:
-https://bitcointalk.org/index.php?topic=85475.0
-It'll contain announcements about important updates to Electrum
+If you're operating a public Electrum-LTC server please subscribe
+to the following mailing list:
+https://groups.google.com/forum/#!forum/electrum-sperocoin-server
+It'll contain announcements about important updates to Electrum-LTC
 server required for a smooth user experience.

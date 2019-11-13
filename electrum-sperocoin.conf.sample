@@ -1,0 +1,33 @@
+[server]
+# username for running the daemon
+username = sperocoin
+# hostname. set it to a FQDN in order to be reached from outside
+host = electrum.sperocoin.org
+# ports
+electrum_rpc_port = 8001
+stratum_tcp_port = 5001
+#stratum_tcp_ssl_port = 5002
+#report_host = 
+#report_stratum_tcp_port = 5001
+#report_stratum_tcp_ssl_port = 5002
+banner = Welcome to the SperoCoin Electrum Server!
+banner_file = /etc/electrum-sperocoin.banner
+irc = yes
+irc_nick = electrum-sperocoin
+#ssl_certfile = /home/sperocoin/electrum-server.crt
+#ssl_keyfile = /home/sperocoin/electrum-server.key
+logfile = /var/log/electrum-sperocoin.log
+donation_address = SNMtrKgPZZeff99kXB4bzFsGVUAhYeeiuM
+
+[leveldb]
+# path to your database
+path = /var/electrum-server
+# for each address, history will be pruned if it is longer than this limit
+pruning_limit = 10000
+
+[bitcoind]
+bitcoind_host = localhost
+bitcoind_port = 55681
+# user and password from sperocoin.conf
+bitcoind_user = test
+bitcoind_password = password

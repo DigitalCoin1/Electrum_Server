@@ -47,8 +47,8 @@ except ImportError:
     fcntl = None
 
 
-from .processor import Session
-from .utils import random_string, print_log
+from processor import Session
+from utils import random_string, print_log
 
 
 def get_version(request):
@@ -345,6 +345,7 @@ class HttpSession(Session):
     def send_response(self, response):
         raw_response = json.dumps(response)
         self.pending_responses.put(response)
+
 
 
 class HttpServer(threading.Thread):

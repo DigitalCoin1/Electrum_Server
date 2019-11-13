@@ -16,7 +16,7 @@ class SerializationError(Exception):
 
 
 class BCDataStream(object):
-    """Workalike python implementation of Sperocoin's CDataStream class."""
+    """Workalike python implementation of Bitcoin's CDataStream class."""
     def __init__(self):
         self.input = None
         self.read_cursor = 0
@@ -46,7 +46,7 @@ class BCDataStream(object):
         # 0 to 252 :    1-byte-length followed by bytes (if any)
         # 253 to 65,535 : byte'253' 2-byte-length followed by bytes
         # 65,536 to 4,294,967,295 : byte '254' 4-byte-length followed by bytes
-        # ... and the Sperocoin client is coded to understand:
+        # ... and the Bitcoin client is coded to understand:
         # greater than 4,294,967,295 : byte '255' 8-byte-length followed by bytes of string
         # ... but I don't think it actually handles any strings that big.
         if self.input is None:
@@ -197,12 +197,12 @@ class Enumeration:
         return self.reverseLookup[value]
 
 
-# This function comes from sperocointools, bct-LICENSE.txt.
+# This function comes from bitcointools, bct-LICENSE.txt.
 def long_hex(bytes):
     return bytes.encode('hex_codec')
 
 
-# This function comes from sperocointools, bct-LICENSE.txt.
+# This function comes from bitcointools, bct-LICENSE.txt.
 def short_hex(bytes):
     t = bytes.encode('hex_codec')
     if len(t) < 11:
@@ -216,6 +216,17 @@ def parse_TxIn(vds):
     d['prevout_n'] = vds.read_uint32()
     scriptSig = vds.read_bytes(vds.read_compact_size())
     d['sequence'] = vds.read_uint32()
+
+    if scriptSig:
+        pubkeys, signatures, address = get_address_from_input_script(scriptSig)
+    else:
+        pubkeys = []
+        signatures = []
+        address = None
+
+    d['address'] = address
+    d['signatures'] = signatures
+
     return d
 
 
@@ -233,24 +244,30 @@ def parse_Transaction(vds, is_coinbase):
     d = {}
     start = vds.read_cursor
     d['version'] = vds.read_int32()
+    d['nTime'] = vds.read_uint32()
     n_vin = vds.read_compact_size()
     d['inputs'] = []
     for i in xrange(n_vin):
-        o = parse_TxIn(vds)
-        if not is_coinbase:
-            d['inputs'].append(o)
+            o = parse_TxIn(vds)
+            if not is_coinbase:
+                    d['inputs'].append(o)
     n_vout = vds.read_compact_size()
     d['outputs'] = []
     for i in xrange(n_vout):
-        o = parse_TxOut(vds, i)
-        d['outputs'].append(o)
+            o = parse_TxOut(vds, i)
+
+            #if o['address'] == "None" and o['value']==0:
+            #        print("skipping strange tx output with zero value")
+            #        continue
+            # if o['address'] != "None":
+            d['outputs'].append(o)
 
     d['lockTime'] = vds.read_uint32()
     return d
 
 
 opcodes = Enumeration("Opcodes", [
-    ("OP_0", 0), ("OP_PUSHDATA1", 76), "OP_PUSHDATA2", "OP_PUSHDATA4", "OP_1NEGATE", "OP_RESERVED",
+    ("OP_0", 0x00), ("OP_PUSHDATA1", 0x4c), ("OP_PUSHDATA2", 0x4d), "OP_PUSHDATA4", "OP_1NEGATE", "OP_RESERVED",
     "OP_1", "OP_2", "OP_3", "OP_4", "OP_5", "OP_6", "OP_7",
     "OP_8", "OP_9", "OP_10", "OP_11", "OP_12", "OP_13", "OP_14", "OP_15", "OP_16",
     "OP_NOP", "OP_VER", "OP_IF", "OP_NOTIF", "OP_VERIF", "OP_VERNOTIF", "OP_ELSE", "OP_ENDIF", "OP_VERIFY",
@@ -266,7 +283,7 @@ opcodes = Enumeration("Opcodes", [
     "OP_HASH256", "OP_CODESEPARATOR", "OP_CHECKSIG", "OP_CHECKSIGVERIFY", "OP_CHECKMULTISIG",
     "OP_CHECKMULTISIGVERIFY",
     "OP_NOP1", "OP_NOP2", "OP_NOP3", "OP_NOP4", "OP_NOP5", "OP_NOP6", "OP_NOP7", "OP_NOP8", "OP_NOP9", "OP_NOP10",
-    ("OP_INVALIDOPCODE", 0xFF),
+    ("OP_INVALIDOPCODE", 0xff),
 ])
 
 
@@ -330,6 +347,47 @@ def match_decoded(decoded, to_match):
 
 
 
+def get_address_from_input_script(bytes):
+    try:
+        decoded = [ x for x in script_GetOp(bytes) ]
+    except:
+        # coinbase transactions raise an exception                                                                                                                 
+        return [], [], None
+
+    # non-generated TxIn transactions push a signature
+    # (seventy-something bytes) and then their public key
+    # (33 or 65 bytes) onto the stack:
+
+    match = [ opcodes.OP_PUSHDATA4, opcodes.OP_PUSHDATA4 ]
+    if match_decoded(decoded, match):
+        return None, None, public_key_to_pubkey_address(decoded[1][1])
+
+    # p2sh transaction, 2 of n
+    match = [ opcodes.OP_0 ]
+    while len(match) < len(decoded):
+        match.append(opcodes.OP_PUSHDATA4)
+
+    if match_decoded(decoded, match):
+
+        redeemScript = decoded[-1][1]
+        num = len(match) - 2
+        signatures = map(lambda x:x[1].encode('hex'), decoded[1:-1])
+        dec2 = [ x for x in script_GetOp(redeemScript) ]
+
+        # 2 of 2
+        match2 = [ opcodes.OP_2, opcodes.OP_PUSHDATA4, opcodes.OP_PUSHDATA4, opcodes.OP_2, opcodes.OP_CHECKMULTISIG ]
+        if match_decoded(dec2, match2):
+            pubkeys = [ dec2[1][1].encode('hex'), dec2[2][1].encode('hex') ]
+            return pubkeys, signatures, hash_160_to_script_address(hash_160(redeemScript))
+
+        # 2 of 3
+        match2 = [ opcodes.OP_2, opcodes.OP_PUSHDATA4, opcodes.OP_PUSHDATA4, opcodes.OP_PUSHDATA4, opcodes.OP_3, opcodes.OP_CHECKMULTISIG ]
+        if match_decoded(dec2, match2):
+            pubkeys = [ dec2[1][1].encode('hex'), dec2[2][1].encode('hex'), dec2[3][1].encode('hex') ]
+            return pubkeys, signatures, hash_160_to_script_address(hash_160(redeemScript))
+
+    return [], [], None
+
 
 def get_address_from_output_script(bytes):
     try:
@@ -349,7 +407,7 @@ def get_address_from_output_script(bytes):
     if match_decoded(decoded, match):
         return None
 
-    # Pay-by-Sperocoin-address TxOuts look like:
+    # Pay-by-Bitcoin-address TxOuts look like:
     # DUP HASH160 20 BYTES:... EQUALVERIFY CHECKSIG
     match = [opcodes.OP_DUP, opcodes.OP_HASH160, opcodes.OP_PUSHDATA4, opcodes.OP_EQUALVERIFY, opcodes.OP_CHECKSIG]
     if match_decoded(decoded, match):
