@@ -6,7 +6,7 @@ host = electrum.sperocoin.org
 # ports
 electrum_rpc_port = 8001
 stratum_tcp_port = 5001
-#stratum_tcp_ssl_port = 5002
+stratum_tcp_ssl_port = 5002
 #report_host = 
 #report_stratum_tcp_port = 5001
 #report_stratum_tcp_ssl_port = 5002
@@ -14,14 +14,14 @@ banner = Welcome to the SperoCoin Electrum Server!
 banner_file = /etc/electrum-sperocoin.banner
 irc = no
 irc_nick = electrum-sperocoin
-#ssl_certfile = /home/sperocoin/electrum-server.crt
-#ssl_keyfile = /home/sperocoin/electrum-server.key
-logfile = /var/log/electrum-sperocoin.log
+ssl_certfile = /home/sperocoin/electrum-server.crt
+ssl_keyfile = /home/sperocoin/electrum-server.key
+logfile = /home/sperocoin/Electrum_data/log/electrum-sperocoin.log
 donation_address = SNMtrKgPZZeff99kXB4bzFsGVUAhYeeiuM
 
 [leveldb]
 # path to your database
-path = /var/electrum-server
+path = /home/sperocoin/Electrum_data
 # for each address, history will be pruned if it is longer than this limit
 pruning_limit = 10000
 
