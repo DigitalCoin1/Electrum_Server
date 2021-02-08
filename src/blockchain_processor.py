@@ -544,7 +544,7 @@ class BlockchainProcessor(Processor):
                 txo = self.bitcoind('sendrawtransaction', params)
                 print_log("sent tx:", txo)
                 result = txo
-            except BaseException, e:
+            except BaseException as e:
                 result = str(e)  # do not send an error
                 print_log("error:", result, params)
 
@@ -627,7 +627,7 @@ class BlockchainProcessor(Processor):
             try:
                 next_block_hash = self.bitcoind('getblockhash', [self.storage.height + 1])
                 next_block = self.getfullblock(next_block_hash)
-            except BaseException, e:
+            except BaseException as e:
                 revert = True
                 next_block = self.getfullblock(self.storage.last_hash)
 

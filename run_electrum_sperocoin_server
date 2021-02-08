@@ -16,7 +16,7 @@
 # <http://www.gnu.org/licenses/agpl.html>.
 
 import argparse
-import ConfigParser
+import configparser
 import logging
 import socket
 import sys
@@ -42,7 +42,7 @@ from electrumsperocoinserver.stratum_http import HttpServer
 logging.basicConfig()
 
 if sys.maxsize <= 2**32:
-    print "Warning: it looks like you are using a 32bit system. You may experience crashes caused by mmap"
+    print("Warning: it looks like you are using a 32bit system. You may experience crashes caused by mmap")
 
 #if os.getuid() == 0:
 #    print "Do not run this program as root!"
@@ -119,7 +119,7 @@ def create_config(filename=None):
                 break
 
     if not os.path.isfile(filename):
-        print 'could not find electrum configuration file "%s"' % filename
+        print ('could not find electrum configuration file "%s"' % filename)
         sys.exit(1)
 
     attempt_read_config(config, filename)
@@ -137,16 +137,16 @@ def run_rpc_command(params, electrum_rpc_port):
     r = func(*params[1:])
     if cmd == 'sessions':
         now = time.time()
-        print 'type           address         sub  version  time'
+        print ('type           address         sub  version  time')
         for item in r:
-            print '%4s   %21s   %3s  %7s  %.2f' % (item.get('name'),
+            print ('%4s   %21s   %3s  %7s  %.2f' % (item.get('name'),
                                                    item.get('address'),
                                                    item.get('subscriptions'),
                                                    item.get('version'),
                                                    (now - item.get('time')),
-                                                   )
+                                                   ))
     else:
-        print json.dumps(r, indent=4, sort_keys=True)
+        print (json.dumps(r, indent=4, sort_keys=True))
 
 
 def cmd_banner_update():
@@ -222,7 +222,7 @@ if __name__ == '__main__':
         try:
             run_rpc_command(args.command, electrum_rpc_port)
         except socket.error:
-            print "server not running"
+            print ("server not running")
             sys.exit(1)
         sys.exit(0)
 
@@ -233,7 +233,7 @@ if __name__ == '__main__':
         is_running = False
 
     if is_running:
-        print "server already running"
+        print ("server already running")
         sys.exit(1)
 
 
